@@ -9,6 +9,8 @@
 #include"def.h"
 #include"read_html.h"
 #include"ext_spc_html.h"
+#include"test.h"
+
 
 int main(int argc, char* argv[])
 {
@@ -18,7 +20,8 @@ int main(int argc, char* argv[])
 	  exit(1);
    }
 
-   test_ext(argv[1]);
+//   test_single(argv[1]);
+   test_ver3();
 
    return 0;
 }

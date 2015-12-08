@@ -10,6 +10,17 @@
 #include<sys/types.h>
 #include<gumbo.h>
 
+struct Log_t
+{
+   char* lineno;
+   char* url;
+   char* content;
+   char* time;
+   struct Log_t* next; 
+};
+
+typedef struct Log_t Log;
+
 typedef struct UrlBuf
 {
    int lineno;

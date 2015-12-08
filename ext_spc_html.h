@@ -12,7 +12,7 @@ void read_spc_html2(GumboNode* root, GumboNode** content, GumboNode** timeNode);
 
 void read_spc_html(GumboNode* root, GumboNode** content);
 
-void test_ext(char* htmlfile);
+int test_ext(char* htmlfile, char** contentstr, char** timestr);
 
 
 #endif
