@@ -9,4 +9,6 @@ void test_ver3();
 
 void test_single(char* html);
 
+void test_ver4();
+
 #endif

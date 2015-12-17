@@ -17,4 +17,4 @@ int find_str_times(char* str, char* word);
 
 int find_comma_num_out(char* line);		//寻找括号外面逗号的数量
 
-int is_time_str(char* str);
+int is_time_str(char* str, char** beg, char** end);

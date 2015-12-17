@@ -12,8 +12,9 @@
 
 struct Log_t
 {
-   char* lineno;
+   int lineno;
    char* url;
+   char* title;
    char* content;
    char* time;
    struct Log_t* next; 

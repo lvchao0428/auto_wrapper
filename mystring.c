@@ -189,10 +189,19 @@ int find_comma_num_out(char* line)		//找到里面内容部分的标点数量
    return comma_num;
 }
 
-int is_time_str(char* str)
+void clean_time_str(char* str)
+{
+
+}
+
+int is_time_str(char* str, char** beg, char** end)
 {
    char* p = str;
    int ret = 0;
+   if(strlen(str) > 30)
+   {
+	  return 0;
+   }
    while(p && *p && strlen(str) >= 6)
    {
 	  //****-**-**格式
@@ -207,7 +216,10 @@ int is_time_str(char* str)
 			&& isdigit(*(p+8))
 			&& isdigit(*(p+9)))
 	  {//
+		 *beg = p;
+		 *end = (p+9);
 		 ret = 1;
+		 break;
 	  }
 	  //****-*-*格式
 	  else if(isdigit(*p) 
@@ -219,7 +231,10 @@ int is_time_str(char* str)
 			&& *(p+6) == '-'
 			&& isdigit(*(p+7)))
 	  {
+		 *beg = p;
+		 *end = (p+7);
 		 ret = 1;
+		 break;
 	  }
 	  //****-**-*格式
 	  else if(isdigit(*p) 
@@ -232,7 +247,10 @@ int is_time_str(char* str)
 			&& *(p+7) == '-'
 			&& isdigit(*(p+8)))
 	  {
+		 *beg = p;
+		 *end = (p+8);
 		 ret = 1;
+		 break;
 	  }
 	  //****-*-**
 	  else if(isdigit(*p) 
@@ -245,7 +263,10 @@ int is_time_str(char* str)
 			&& isdigit(*(p+7))
 			&& isdigit(*(p+8)))
 	  {
+		 *beg = p;
+		 *end = (p+8);
 		 ret = 1;
+		 break;
 	  }//**-**-**
 	  else if(isdigit(*p) 
 			&& isdigit(*(p+1)) 
@@ -256,7 +277,10 @@ int is_time_str(char* str)
 			&& isdigit(*(p+6))
 			&& isdigit(*(p+7)))
 	  {
+		 *beg = p;
+		 *end = (p+7);
 		 ret = 1;
+		 break;
 	  }
 	  //**-*-*
 	  else if(isdigit(*p) 
@@ -266,7 +290,10 @@ int is_time_str(char* str)
 			&& *(p+4) == '-'
 			&& isdigit(*(p+5)))
 	  {
+		 *beg = p;
+		 *end = (p+5);
 		 ret = 1;
+		 break;
 	  }
 	  //**-*-**
 	  else if(isdigit(*p) 
@@ -277,7 +304,10 @@ int is_time_str(char* str)
 			&& isdigit(*(p+5))
 			&& isdigit(*(p+6)))
 	  {
+		 *beg = p;
+		 end = (p+6);
 		 ret = 1;
+		 break;
 	  }
 	  //**-**-*
 	  else if(isdigit(*p) 
@@ -288,7 +318,10 @@ int is_time_str(char* str)
 			&& *(p+5) == '-'
 			&& isdigit(*(p+6)))
 	  {
+		 *beg = p;
+		 *end = (p+6);
 		 ret = 1;
+		 break;
 	  }
 
 	  p++;

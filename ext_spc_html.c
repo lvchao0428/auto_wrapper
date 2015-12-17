@@ -31,13 +31,13 @@ void ret_tag(GumboNode* node, char* tag, int* length)
 	*length = j;
 }
 
-void read_spc_html2(GumboNode* root, GumboNode** contentNode, GumboNode** timeNode)
+void read_spc_html2(GumboNode* root, GumboNode** contentNode, GumboNode** timeNode, char** timestr)
 {
    if(!root)
    {
 	  return;
    }
-   else if(root->type == GUMBO_NODE_ELEMENT && *contentNode == NULL
+   else if(root->type == GUMBO_NODE_ELEMENT && (*contentNode == NULL || *timestr)
 		 && root->type != GUMBO_TAG_SCRIPT &&
 		 root->type != GUMBO_TAG_STYLE)
    {
@@ -45,15 +45,15 @@ void read_spc_html2(GumboNode* root, GumboNode** contentNode, GumboNode** timeNo
 	  int i;
 	  for(i = 0; i < children->length; ++i)
 	  {
-		 read_spc_html2(children->data[i], contentNode, timeNode);
+		 read_spc_html2(children->data[i], contentNode, timeNode, timestr);
 	  }
    }
    else if(root->type == GUMBO_NODE_TEXT &&
 		 root->parent->v.element.tag != GUMBO_TAG_SCRIPT &&
 		 root->parent->v.element.tag != GUMBO_TAG_STYLE &&
-		 (*contentNode == NULL || *timeNode == NULL) &&
-		 root->parent->v.element.tag != GUMBO_TAG_ANNOTATION_XML &&
-		 strcasecmp(gumbo_normalized_tagname(root->parent->v.element.tag), "textarea") != 0)
+		 (*contentNode == NULL || *timestr == NULL) &&
+		 root->parent->v.element.tag != GUMBO_TAG_ANNOTATION_XML)// &&
+		 //strcasecmp(gumbo_normalized_tagname(root->parent->v.element.tag), "textarea") != 0)
    {
 	  /*
 	  if(root->v.text.text)
@@ -62,7 +62,7 @@ void read_spc_html2(GumboNode* root, GumboNode** contentNode, GumboNode** timeNo
 		 //	printf("str:%s\n", root->v.text.text);
 	  }
 	  */
-
+//	  printf("tag num:%d\n", )
 	  //content ext
 	  //ver1 1只检测标点,并直接找到最近div
 	  if(find_comma_num_out(root->v.text.text) > 5)
@@ -70,8 +70,11 @@ void read_spc_html2(GumboNode* root, GumboNode** contentNode, GumboNode** timeNo
 		 //如果text的标点符号超过阈值，则向上遍历到div或者table节点
 		 GumboNode* tempcontentNode = NULL;
 		 tempcontentNode = root->parent;
+		
 		 while(tempcontentNode)
 		 {
+		//	printf("tagnum:%d\n", tempcontentNode->v.element.tag);
+		//	printf("tag last:%d\n", GUMBO_TAG_LAST);
 			if(strcasecmp(gumbo_normalized_tagname(tempcontentNode->v.element.tag), "div") == 0 ||
 				  strcasecmp(gumbo_normalized_tagname(tempcontentNode->v.element.tag), "table") == 0)
 			{
@@ -101,26 +104,33 @@ void read_spc_html2(GumboNode* root, GumboNode** contentNode, GumboNode** timeNo
 
 		 */
 	  }
-	  GumboNode* temptimeNode = NULL;
-	  temptimeNode = root;
-	  //time ext
-	  if(is_time_str(root->v.text.text))
+	  if(*timestr == NULL)
 	  {
-//		 printf("time:1:str:%s\n", root->v.text.text);
-	  }
-	  if(is_time_str(root->v.text.text))
-	  {
-		 temptimeNode = temptimeNode->parent;
-		 while(temptimeNode)
+		 GumboNode* temptimeNode = NULL;
+		 temptimeNode = root;
+		 //time ext
+		 char* timebeg, * timeend;
+		 timebeg = NULL;
+		 timeend = NULL;
+		 if(is_time_str(root->v.text.text, &timebeg, &timeend))
 		 {
-			if(strcasecmp(gumbo_normalized_tagname(temptimeNode->v.element.tag), "span") == 0)
-			{
-			   *timeNode = temptimeNode;
-			   break;
-			}
-
 			temptimeNode = temptimeNode->parent;
+			while(temptimeNode)
+			{
+			   //printf("time tagnum:%d\n", temptimeNode->v.element.tag);
+			   //printf("time tag last:%d\n", GUMBO_TAG_LAST);
+			   if(temptimeNode->v.element.tag != GUMBO_TAG_LAST)
+			   {
+				  *timestr = (char*)malloc(sizeof(char)*(timeend - timebeg + 2));
+				  snprintf(*timestr, sizeof(char)*(timeend - timebeg + 2), "%s", timebeg);
+				  *timeNode = temptimeNode;
+				  break;
+			   }
+
+			   temptimeNode = temptimeNode->parent;
+			}
 		 }
+
 	  }
 
    }
@@ -162,15 +172,40 @@ void read_spc_html(GumboNode* root, GumboNode** content)
    }
 }
 
-int test_ext(char* htmlfile, char** contentstr, char** timestr)
+void find_body(GumboNode* root, GumboNode** bodyNode)
+{
+   if(!root)
+   {
+	  return;
+   }
+   else if(*bodyNode == NULL && root->type == GUMBO_NODE_ELEMENT)
+   {
+	  if(strcasecmp(gumbo_normalized_tagname(root->v.element.tag), "body") == 0)
+	  {
+		 *bodyNode = root;
+		 return;
+	  }
+	  else
+	  {
+		 GumboVector* children = &root->v.element.children;
+		 int i;
+		 for(i = 0; i < children->length; ++i)
+		 {
+			find_body(children->data[i], bodyNode);
+		 }
+	  }
+   }
+}
+
+int test_ext(char* htmlfile, char** contentstr, char** titlestr,char** timestr)
 {
    FILE* fp = fopen(htmlfile, "r");
    if(!fp)
    {
-	  printf("error\n");
+	  printf("file not exsit\n");
 	  return -1;
    }
-   char* input;
+   char* input = NULL;
    int input_length;
    read_file(fp, &input, &input_length);
 
@@ -180,17 +215,27 @@ int test_ext(char* htmlfile, char** contentstr, char** timestr)
 	  printf("parse error\n");
 	  return -2;
    }
+   
    char* title = find_title(output->root);
+   *titlestr = (char*)malloc(sizeof(char)*(strlen(title) + 1));
+   memcpy(*titlestr, title, sizeof(char)*(strlen(title) + 1));
    if(strstr(title, "302") || strstr(title, "404") || strstr(title, "403"))
    {
+//	  printf("")
+	  free(input);
+
+	  gumbo_destroy_output(&kGumboDefaultOptions, output);
 	  return -1;
    }
    GumboNode* contentNode = NULL;
    GumboNode* timeNode = NULL;
    //char* content = NULL;
-   read_spc_html2(output->root, &contentNode, &timeNode);
+   GumboNode* bodyNode = NULL;
+   find_body(output->root, &bodyNode);
+  // printf("bodyNode:%s\n", gumbo_normalized_tagname(bodyNode->v.element.tag));
+   read_spc_html2(bodyNode, &contentNode, &timeNode, timestr);
    
-   //test tag output
+   //test tag outpu
    
 
 //   contentNode->v.element.tag
@@ -205,10 +250,11 @@ int test_ext(char* htmlfile, char** contentstr, char** timestr)
    //printf("tag:%s\n", tag);
    cleantext(contentNode, contentstr);
    //printf("content:%s\n", content);
-
+   
+   free(input);
    ///time
 //   char* timestr = NULL;
-   cleantext(timeNode, timestr);
+   //cleantext(timeNode, timestr);
 //   printf("time:%s\n", timestr);
    gumbo_destroy_output(&kGumboDefaultOptions, output);
    //free(content);

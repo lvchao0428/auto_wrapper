@@ -14,14 +14,15 @@
 
 int main(int argc, char* argv[])
 {
+   /*
    if(argc < 2)
    {
 	  printf("need file name\n");
 	  exit(1);
    }
-
-//   test_single(argv[1]);
+*/
+  // test_single(argv[1]);
    test_ver3();
-
+   //test_ver4();
    return 0;
 }

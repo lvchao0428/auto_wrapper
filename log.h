@@ -3,7 +3,9 @@
 
 #include"def.h"
 
-void push(Log** lg, int lineno, char* url, char* content, char* time);
+void push_log(Log** lg, int lineno, char* url, char* title, char* content, char* time);
 
+
+void print_log(Log* lg);
 
 #endif
